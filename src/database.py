@@ -37,6 +37,50 @@ def get_target_databases(connection: pymysql.connections.Connection, company_cho
     
     return []
 
+def get_all_databases(connection: pymysql.connections.Connection) -> List[str]:
+    """Gets the list of all relevant databases."""
+    with connection.cursor() as cursor:
+        cursor.execute("SHOW DATABASES")
+        all_dbs = [db[0] for db in cursor.fetchall()]
+    
+    # Filter databases that follow the requested pattern
+    filtered_dbs = [
+        db for db in all_dbs 
+        if db.startswith('obra_') or db.startswith('cantera_') or db in ['tocsa_prd', 'implenia_prd', 'maquinaria_prd']
+    ]
+    return filtered_dbs
+
+def deactivate_user(connection: pymysql.connections.Connection, db_name: str, table_name: str, user_code: str) -> bool:
+    """
+    Deactivates a user in a specific database by setting the 'Closed' field to 1.
+    Returns True if the user was deactivated, False otherwise.
+    """
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(f"USE `{db_name}`")
+            # Check if user exists and is not already closed
+            query = f"SELECT `Closed` FROM `{table_name}` WHERE `Code` = %s"
+            cursor.execute(query, (user_code,))
+            result = cursor.fetchone()
+
+            if result is None:
+                print(f"  - El usuario '{user_code}' no existe en '{db_name}'.")
+                return False
+
+            if result[0] == 1:
+                print(f"  - El usuario '{user_code}' ya estaba inactivo en '{db_name}'.")
+                return False
+
+            # Deactivate user
+            update_query = f"UPDATE `{table_name}` SET `Closed` = 1 WHERE `Code` = %s"
+            cursor.execute(update_query, (user_code,))
+            connection.commit()
+            return True
+        except pymysql.MySQLError as e:
+            print(f"  - Error al desactivar en '{db_name}': {e}")
+            return False
+
+
 def insert_user(connection: pymysql.connections.Connection, db_name: str, table_name: str, user_data: Dict[str, Any]) -> None:
     """Inserts a user into the specified database."""
     with connection.cursor() as cursor:

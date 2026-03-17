@@ -73,3 +73,12 @@ def display_menu(title: str, options: dict) -> str:
         else:
             print_error("Opcin no vlida. Intente de nuevo.")
             input("\nPresione Enter para continuar...")
+
+def display_main_menu():
+    """Displays the main application menu."""
+    menu_options = {
+        "1": "Agregar Usuario",
+        "2": "Desactivar Usuario",
+        "S": "Salir"
+    }
+    return display_menu("Menú Principal", menu_options)

@@ -42,7 +42,18 @@ def get_user_data() -> Optional[Dict[str, str]]:
             "access_group": access_group,
             "email": email
         }
-    except EOFError:
-        print()  # Add a newline after the prompt before exiting
+    except (EOFError, KeyboardInterrupt):
+        print()
+        ui.print_warning("\nEntrada cancelada por el usuario.")
+        return None
+
+def get_user_to_deactivate() -> Optional[str]:
+    """Prompts the user for the code of the user to deactivate."""
+    ui.print_header("Desactivar Usuario")
+    try:
+        code = input(f"* {ui.Colors.BOLD}Ingrese el Cdigo del usuario a desactivar: {ui.Colors.RESET}")
+        return code
+    except (EOFError, KeyboardInterrupt):
+        print()
         ui.print_warning("\nEntrada cancelada por el usuario.")
         return None
