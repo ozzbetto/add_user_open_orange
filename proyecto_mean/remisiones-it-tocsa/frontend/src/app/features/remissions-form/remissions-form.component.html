@@ -1,0 +1,162 @@
+<div class="mx-auto container-narrow vstack gap-4" style="max-width: 900px;">
+  <div class="d-flex align-items-center gap-3">
+    <p-button icon="pi pi-arrow-left" [rounded]="true" severity="secondary" [outlined]="true" routerLink="/remisiones"></p-button>
+    <div>
+      <h1 class="h3 fw-bold mb-1">
+        {{ isViewMode ? 'Detalles de Remisión' : (isEditMode ? 'Editar Remisión' : 'Nueva Nota de Remisión') }}
+      </h1>
+      <p class="text-secondary small mb-0">
+        {{ isViewMode ? 'Visualizando la información de la nota de remisión.' : 'Complete los datos obligatorios según la normativa vigente.' }}
+      </p>
+    </div>
+  </div>
+
+  <form [formGroup]="remissionForm" (ngSubmit)="onSubmit()" class="vstack gap-4">
+    <!-- Destinatario Section -->
+    <p-card styleClass="shadow-sm border-round overflow-hidden">
+      <ng-template pTemplate="header">
+        <div class="bg-light border-bottom py-3 px-4">
+          <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+            <i class="pi pi-user text-primary text-xl"></i>
+            Datos del Destinatario
+          </h2>
+        </div>
+      </ng-template>
+      <div formGroupName="recipient">
+        <div class="row g-4">
+          <div class="col-md-6 d-flex flex-column gap-2">
+            <label class="fw-semibold small">Nombre Completo *</label>
+            <input pInputText type="text" formControlName="name" placeholder="Ej: Juan Pérez" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('recipient.name')}">
+            <small *ngIf="!isViewMode && isFieldInvalid('recipient.name')" class="p-error block">El nombre es requerido y mínimo 3 caracteres.</small>
+          </div>
+          <div class="col-md-6 d-flex flex-column gap-2">
+            <label class="fw-semibold small">CI / RUC *</label>
+            <input pInputText type="text" formControlName="idNumber" placeholder="Ej: 1.234.567-0" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('recipient.idNumber')}">
+            <small *ngIf="!isViewMode && isFieldInvalid('recipient.idNumber')" class="p-error block">El documento es requerido y solo debe contener números, puntos o guiones.</small>
+          </div>
+          <div class="col-md-6 d-flex flex-column gap-2">
+            <label class="fw-semibold small">Cargo / Área *</label>
+            <input pInputText type="text" formControlName="positionArea" placeholder="Ej: Gerente de Ventas" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('recipient.positionArea')}">
+            <small *ngIf="!isViewMode && isFieldInvalid('recipient.positionArea')" class="p-error block">El cargo es requerido.</small>
+          </div>
+          <div class="col-md-6 d-flex flex-column gap-2">
+            <label class="fw-semibold small">Ubicación *</label>
+            <input pInputText type="text" formControlName="location" placeholder="Ej: Cantera Confuso" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('recipient.location')}">
+            <small *ngIf="!isViewMode && isFieldInvalid('recipient.location')" class="p-error block">La ubicación es requerida.</small>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Motivo y Otros Section -->
+    <p-card styleClass="shadow-sm border-round overflow-hidden">
+      <div class="row g-4">
+        <div class="col-md-6 d-flex flex-column gap-2">
+          <label class="fw-semibold small d-flex align-items-center gap-2">
+            <i class="pi pi-info-circle text-muted"></i>
+            Motivo del Traslado *
+          </label>
+          <select formControlName="transferReason" class="form-select p-inputtext">
+            <option value="traslado interno">Traslado Interno</option>
+            <option value="reparación">Reparación</option>
+            <option value="transformación">Transformación</option>
+            <option value="exhibición">Exhibición</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-flex flex-column gap-2">
+          <label class="fw-semibold small">Fecha de Emisión *</label>
+          <input pInputText type="date" formControlName="date" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('date')}">
+          <small *ngIf="!isViewMode && isFieldInvalid('date')" class="p-error block">La fecha es requerida.</small>
+        </div>
+        <div class="col-12 d-flex flex-column gap-2">
+          <label class="fw-semibold small">Observaciones Generales</label>
+          <textarea pTextarea formControlName="observations" rows="2" placeholder="Detalles adicionales..."></textarea>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Artículos Section -->
+    <p-card styleClass="shadow-sm border-round overflow-hidden">
+      <ng-template pTemplate="header">
+        <div class="bg-light border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+            <i class="pi pi-box text-primary text-xl"></i>
+            Artículos / Bienes
+          </h2>
+          <p-button *ngIf="!isViewMode" label="Agregar Ítem" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addItem()"></p-button>
+        </div>
+      </ng-template>
+
+      <div formArrayName="items">
+        <div class="vstack gap-4">
+          @for (item of items.controls; track $index) {
+            <div [formGroupName]="$index" class="position-relative border rounded-3 p-3 bg-light-subtle">
+              <div class="row g-3">
+                <div class="col-lg-4 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Descripción *</label>
+                  <input pInputText type="text" formControlName="description" placeholder="Ej: Monitor LED" class="p-inputtext-sm" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isItemFieldInvalid($index, 'description')}">
+                </div>
+                <div class="col-sm-6 col-lg-2 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Marca *</label>
+                  <input pInputText type="text" formControlName="brand" class="p-inputtext-sm" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isItemFieldInvalid($index, 'brand')}">
+                </div>
+                <div class="col-sm-6 col-lg-2 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Modelo *</label>
+                  <input pInputText type="text" formControlName="model" class="p-inputtext-sm" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isItemFieldInvalid($index, 'model')}">
+                </div>
+                <div class="col-sm-6 col-lg-2 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Serie *</label>
+                  <input pInputText type="text" formControlName="serial" class="p-inputtext-sm" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isItemFieldInvalid($index, 'serial')}">
+                </div>
+                <div class="col-sm-4 col-lg-1 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Cant. *</label>
+                  <input pInputText type="number" formControlName="quantity" class="p-inputtext-sm text-center" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isItemFieldInvalid($index, 'quantity')}">
+                </div>
+                <div class="col-sm-2 col-lg-1 d-flex align-items-end justify-content-end pb-1" *ngIf="!isViewMode">
+                   <p-button icon="pi pi-times-circle" [rounded]="true" [text]="true" severity="danger" (onClick)="removeItem($index)" [disabled]="items.length <= 1"></p-button>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Estado *</label>
+                  <select formControlName="condition" class="form-select form-select-sm p-inputtext p-inputtext-sm">
+                    <option value="nuevo">Nuevo</option>
+                    <option value="usado">Usado</option>
+                    <option value="reparado">Reparado</option>
+                    <option value="dañado">Dañado</option>
+                  </select>
+                </div>
+                <div class="col-md-6 col-lg-8 d-flex flex-column gap-1">
+                  <label class="small fw-bold text-muted text-uppercase">Observación del Ítem</label>
+                  <input pInputText type="text" formControlName="observation" class="p-inputtext-sm" placeholder="Opcional...">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        <small *ngIf="!isViewMode && items.invalid && items.touched" class="p-error block mt-3">Debe agregar al menos un artículo correctamente llenado.</small>
+      </div>
+    </p-card>
+
+    <!-- Firmas Section -->
+    <p-card styleClass="shadow-sm border-round overflow-hidden">
+      <div class="row g-4">
+        <div class="col-md-6 d-flex flex-column gap-2">
+          <label class="fw-semibold small">Nombre de quien Autoriza *</label>
+          <input pInputText type="text" formControlName="authorizedBy" placeholder="Ingrese un nombre" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('authorizedBy')}">
+          <small *ngIf="!isViewMode && isFieldInvalid('authorizedBy')" class="p-error block">La autorización es requerida.</small>
+        </div>
+        <div class="col-md-6 d-flex flex-column gap-2">
+          <label class="fw-semibold small">Nombre de quien Recibe *</label>
+          <input pInputText type="text" formControlName="receivedBy" placeholder="Ingrese un nombre" [ngClass]="{'ng-invalid ng-dirty': !isViewMode && isFieldInvalid('receivedBy')}">
+          <small *ngIf="!isViewMode && isFieldInvalid('receivedBy')" class="p-error block">El receptor es requerido.</small>
+        </div>
+      </div>
+    </p-card>
+
+    <div class="d-flex justify-content-end gap-3 mb-5">
+      <p-button [label]="isViewMode ? 'Volver al Listado' : 'Cancelar'" severity="secondary" [outlined]="true" routerLink="/remisiones"></p-button>
+      <p-button *ngIf="!isViewMode" type="submit" [label]="isEditMode ? 'Actualizar Remisión' : 'Generar Remisión'" icon="pi pi-check-circle" [loading]="isSubmitting()"></p-button>
+    </div>
+  </form>
+</div>
